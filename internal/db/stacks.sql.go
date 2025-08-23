@@ -11,25 +11,19 @@ import (
 	"github.com/google/uuid"
 )
 
-const archiveStack = `-- name: ArchiveStack :one
-update stacks
-set archived_at = now()
-where id = $1
-  and archived_at is null
-returning id, name, slug, created_at, archived_at
+const archiveStack = `-- name: ArchiveStack :execrows
+UPDATE stacks
+SET archived_at = now()
+WHERE id = $1
+  AND archived_at IS NULL
 `
 
-func (q *Queries) ArchiveStack(ctx context.Context, id uuid.UUID) (Stack, error) {
-	row := q.db.QueryRow(ctx, archiveStack, id)
-	var i Stack
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Slug,
-		&i.CreatedAt,
-		&i.ArchivedAt,
-	)
-	return i, err
+func (q *Queries) ArchiveStack(ctx context.Context, id uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, archiveStack, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const createStack = `-- name: CreateStack :one
@@ -115,4 +109,18 @@ func (q *Queries) ListStacks(ctx context.Context, arg ListStacksParams) ([]Stack
 		return nil, err
 	}
 	return items, nil
+}
+
+const stackArchivedStatus = `-- name: StackArchivedStatus :one
+SELECT EXISTS (SELECT 1
+               FROM stacks
+               WHERE id = $1
+                 AND archived_at IS NOT NULL) AS already_archived
+`
+
+func (q *Queries) StackArchivedStatus(ctx context.Context, id uuid.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, stackArchivedStatus, id)
+	var already_archived bool
+	err := row.Scan(&already_archived)
+	return already_archived, err
 }

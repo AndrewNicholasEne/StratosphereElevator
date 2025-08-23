@@ -11,10 +11,11 @@ import (
 )
 
 type Querier interface {
-	ArchiveStack(ctx context.Context, id uuid.UUID) (Stack, error)
+	ArchiveStack(ctx context.Context, id uuid.UUID) (int64, error)
 	CreateStack(ctx context.Context, arg CreateStackParams) (Stack, error)
 	GetStackBySlug(ctx context.Context, slug string) (Stack, error)
 	ListStacks(ctx context.Context, arg ListStacksParams) ([]Stack, error)
+	StackArchivedStatus(ctx context.Context, id uuid.UUID) (bool, error)
 }
 
 var _ Querier = (*Queries)(nil)

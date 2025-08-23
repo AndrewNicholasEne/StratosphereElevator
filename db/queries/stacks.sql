@@ -16,9 +16,14 @@ where ($1::bool is true)
 order by created_at desc
 limit $2::int offset $3::int;
 
--- name: ArchiveStack :one
-update stacks
-set archived_at = now()
-where id = sqlc.arg(id)
-  and archived_at is null
-returning id, name, slug, created_at, archived_at;
+-- name: ArchiveStack :execrows
+UPDATE stacks
+SET archived_at = now()
+WHERE id = sqlc.arg(id)
+  AND archived_at IS NULL;
+
+-- name: StackArchivedStatus :one
+SELECT EXISTS (SELECT 1
+               FROM stacks
+               WHERE id = sqlc.arg(id)
+                 AND archived_at IS NOT NULL) AS already_archived;
