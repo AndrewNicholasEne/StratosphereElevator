@@ -11,7 +11,7 @@ where slug = sqlc.arg(slug);
 -- name: ListStacks :many
 select id, name, slug, created_at, archived_at
 from stacks
-where ($1::bool is false)
+where ($1::bool is true)
    or (archived_at is null)
 order by created_at desc
 limit $2::int offset $3::int;
