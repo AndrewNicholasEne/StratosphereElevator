@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/AndrewNicholasEne/StratosphereElevator/internal/db"
@@ -50,7 +51,21 @@ func writeErr(w http.ResponseWriter, code int, msg string) {
 }
 
 func (h *StacksHTTP) List(w http.ResponseWriter, r *http.Request) {
-	items, err := h.svc.List(r.Context(), db.ListStacksParams{Column1: false})
+	q := r.URL.Query()
+
+	inc, _ := strconv.ParseBool(q.Get("include_archived"))
+
+	limit := int32(20)
+	if n, err := strconv.Atoi(q.Get("limit")); err == nil && n >= 1 && n <= 100 {
+		limit = int32(n)
+	}
+
+	offset := int32(0)
+	if n, err := strconv.Atoi(q.Get("offset")); err == nil && n >= 0 {
+		offset = int32(n)
+	}
+
+	items, err := h.svc.List(r.Context(), db.ListStacksParams{Column1: inc, Column2: limit, Column3: offset})
 	if err != nil {
 		writeErr(w, 500, "internal")
 		return
@@ -61,6 +76,7 @@ func (h *StacksHTTP) List(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, 200, out)
 }
+
 func (h *StacksHTTP) GetBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := r.PathValue("slug")
 	s, err := h.svc.GetBySlug(r.Context(), slug)
