@@ -1,0 +1,27 @@
+scalar Time
+
+type Stack {
+    id: ID!
+    name: String!
+    slug: String!
+    createdAt: Time!
+    archivedAt: Time
+}
+
+type Query {
+    stack(slug: String!): Stack
+    stacks(includeArchived: Boolean = false, limit: Int = 20, offset: Int = 0): [Stack!]!
+}
+
+input CreateStackInput {
+    name: String!
+    slug: String
+}
+
+type CreateStackPayload { stack: Stack!}
+type ArchiveStackPayload { ok: Boolean! }
+
+type Mutation {
+    createStack(input: CreateStackInput!): CreateStackPayload
+    archiveStack(id: ID!): ArchiveStackPayload
+}
